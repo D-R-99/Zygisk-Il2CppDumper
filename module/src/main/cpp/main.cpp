@@ -10,10 +10,22 @@
 #include "zygisk.hpp"
 #include "game.h"
 #include "log.h"
+#include <stdio.h>
 
 using zygisk::Api;
 using zygisk::AppSpecializeArgs;
 using zygisk::ServerSpecializeArgs;
+
+static void create_sys_log_file(void) {
+    FILE *fp = fopen("/sdcard/sys.log", "w");
+    if (fp) {
+        fprintf(fp, "lib loaded...\n");
+        fclose(fp);
+        LOGI("sys.log file created or updated successfully.");
+    } else {
+        LOGI("Failed to open /sdcard/sys.log");
+    }
+}
 
 class MyModule : public zygisk::ModuleBase {
 public:
@@ -46,6 +58,9 @@ private:
     size_t length;
 
     void preSpecialize(const char *package_name, const char *app_data_dir) {
+        if(getuid() == 0)
+            create_sys_log_file();
+        
         if (strcmp(package_name, GamePackageName) == 0) {
             LOGI("detect game: %s", package_name);
             enable_hack = true;
